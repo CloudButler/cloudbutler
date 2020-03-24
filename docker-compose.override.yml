@@ -1,0 +1,13 @@
+version: '2'
+services:
+  cog:
+    environment:
+      - COG_SLACK_ENABLED=1
+      - SLACK_API_TOKEN=${COG_SLACK_TOKEN}
+      - COG_BOOTSTRAP_USERNAME=admin
+      - COG_BOOTSTRAP_PASSWORD=${COG_ADMIN_PASSWORD}
+      - COG_BOOTSTRAP_EMAIL_ADDRESS=admin@localhost
+      - COG_BOOTSTRAP_FIRST_NAME=Cog
+      - COG_BOOTSTRAP_LAST_NAME=Administrator
+
+

@@ -1,0 +1,75 @@
+# Example docker-compose file for Cog
+#
+# This is intended as a minimal example of running an instance of Cog connected
+# to Slack or Hipchat. To get started, you should create a new configuration
+# based on your chat provider using the provided templates. There should be
+# two override files in the same directory as this file:
+#
+# docker-compose.override.hipchat_example.yml
+# docker-compose.override.slack_example.yml
+#
+# Select the one that matches your chat provider, and copy it to the same
+# directory with the name docker-compose.override.yml.
+#
+# Next, you need to export some environment variables in the environment that
+# docker-compose is called from:
+#
+#    * COG_HOST - this is not a Cog environment variable per se, but
+#      one specifically for this docker-compose example. You should
+#      set this to the host that cog can be accessed "from the
+#      outside". If using docker-machine, for example, you could set
+#      this to `docker-machine ip default`
+#    * Provider-specific API configuration options are listed in the
+#      docker-compose.override.yml file that you copied above and also
+#      need to be set in order for Cog to connect to your provider.
+#
+# Once you have the required configuration exported, start Cog by running:
+# docker-compose up
+#
+# The Cog API will be available on port 80 of $COG_HOST, while
+# triggers can be invoked on port 3000.
+#
+# Note that this example is not intended for production use and cuts some
+# corners for the sake of simplicity. Examples include hard-coded credentials
+# for Postgres, persistence of Postgres and log data, and customization of
+# other Cog configuration values.
+#
+# For complete installation and administration documentation, you should refer
+# to the Cog Book, which can be found at:
+#
+# https://cog-book.operable.io/
+#
+version: '2'
+services:
+  cog:
+    extends:
+      file: docker-compose.common.yml
+      service: common
+    image: operable/cog:1.0
+    volumes:
+      - /home/cloudbutler/bundles:/home/operable/cog/bundles
+    environment:
+      - COG_MQTT_HOST=0.0.0.0
+      - DATABASE_URL=ecto://postgres:${COG_ADMIN_PASSWORD}@dev-postgres1.czsoq2ly8ukl.us-west-2.rds.amazonaws.com:5432/db1
+    ports:
+      - 1883
+      - 80:4000
+      - 4001:4001
+      - 4002:4002
+    entrypoint: /home/operable/cog/scripts/docker-start
+  relay:
+    extends:
+      file: docker-compose.common.yml
+      service: common
+    image: operable/relay:1.0
+    privileged: true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - RELAY_COG_REFRESH_INTERVAL=30s
+      - RELAY_DOCKER_CLEAN_INTERVAL=1m
+      - RELAY_COG_HOST=cog
+      - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
+    depends_on:
+      - cog
+    entrypoint: /usr/local/bin/relay

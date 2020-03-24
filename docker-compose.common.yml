@@ -1,0 +1,9 @@
+version: '2'
+services:
+  common:
+    environment:
+      - COG_API_URL_BASE=http://localhost
+      - COG_TRIGGER_URL_BASE=http://localhost:4001
+      - COG_SERVICE_URL_BASE=http://localhost:4002
+      - RELAY_ID=00000000-0000-0000-0000-000000000000
+      - RELAY_COG_TOKEN=${COG_ADMIN_PASSWORD}
