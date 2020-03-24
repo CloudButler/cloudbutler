@@ -50,7 +50,7 @@ services:
       - /home/cloudbutler/bundles:/home/operable/cog/bundles
     environment:
       - COG_MQTT_HOST=0.0.0.0
-      - DATABASE_URL=ecto://postgres:${COG_ADMIN_PASSWORD}@dev-postgres1.czsoq2ly8ukl.us-west-2.rds.amazonaws.com:5432/db1
+      - DATABASE_URL=ecto://postgres:${COG_ADMIN_PASSWORD}@${COG_POSTGRES_URL}:5432/db1
     ports:
       - 1883
       - 80:4000
