@@ -1,0 +1,551 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  Template for creating a ready-to-use CloudButler instance.
+Parameters:
+  InstanceType:
+    Description: Name of EC2 instance type.
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+      - m1.small
+      - m1.medium
+      - m1.large
+      - m1.xlarge
+      - m2.xlarge
+      - m2.2xlarge
+      - m2.4xlarge
+      - m3.medium
+      - m3.large
+      - m3.xlarge
+      - m3.2xlarge
+      - m4.large
+      - m4.xlarge
+      - m4.2xlarge
+      - m4.4xlarge
+      - m4.10xlarge
+      - c1.medium
+      - c1.xlarge
+      - c3.large
+      - c3.xlarge
+      - c3.2xlarge
+      - c3.4xlarge
+      - c3.8xlarge
+      - c4.large
+      - c4.xlarge
+      - c4.2xlarge
+      - c4.4xlarge
+      - c4.8xlarge
+      - g2.2xlarge
+      - g2.8xlarge
+      - r3.large
+      - r3.xlarge
+      - r3.2xlarge
+      - r3.4xlarge
+      - r3.8xlarge
+      - i2.xlarge
+      - i2.2xlarge
+      - i2.4xlarge
+      - i2.8xlarge
+      - d2.xlarge
+      - d2.2xlarge
+      - d2.4xlarge
+      - d2.8xlarge
+      - hi1.4xlarge
+      - hs1.8xlarge
+      - cr1.8xlarge
+      - cc2.8xlarge
+      - cg1.4xlarge
+    ConstraintDescription: Must be a valid EC2 instance type.
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance.
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: Must be the name of an existing EC2 KeyPair.
+  SSHLocation:
+    Description: 'The IP address range that will be allowed to access the EC2 instance.'
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: Must be a valid IP CIDR range (ex x.x.x.x/x).
+  SlackAPIToken:
+    Description: The token that your CloudButler can use to connect with Slack. (ex xoxb-87931061512-4m0DshC7s48tLNjTMuxxozUo)
+    Type: String
+    Default: ''
+  CloudButlerPassword:
+    Description: The administrator password for CloudButler. (You'll need to remember this!)
+    Type: String
+    Default: ''
+  PostgresURL:
+    Description: The URL where your Postgres database is located. (Leave as default to have local database automatically created.)
+    Type: String
+    Default: 'postgres'
+  PostgresPort:
+    Description: The port where your Postgres database is running.
+    Type: String
+    Default: '5432'
+  PostgresName:
+    Description: The name of an empty Postgres database that CloudButler can use. 
+    Type: String
+    Default: 'cog'
+  PostgresUser:
+    Description: The username that CloudBulter can use to access the specified database.
+    Type: String
+    Default: 'cog'
+  PostgresPassword:
+    Description: The password that CloudBulter can use to access the specified database.
+    Type: String
+    Default: 'cog'
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: HVM64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+    m1.small:
+      Arch: HVM64
+    m1.medium:
+      Arch: HVM64
+    m1.large:
+      Arch: HVM64
+    m1.xlarge:
+      Arch: HVM64
+    m2.xlarge:
+      Arch: HVM64
+    m2.2xlarge:
+      Arch: HVM64
+    m2.4xlarge:
+      Arch: HVM64
+    m3.medium:
+      Arch: HVM64
+    m3.large:
+      Arch: HVM64
+    m3.xlarge:
+      Arch: HVM64
+    m3.2xlarge:
+      Arch: HVM64
+    m4.large:
+      Arch: HVM64
+    m4.xlarge:
+      Arch: HVM64
+    m4.2xlarge:
+      Arch: HVM64
+    m4.4xlarge:
+      Arch: HVM64
+    m4.10xlarge:
+      Arch: HVM64
+    c1.medium:
+      Arch: HVM64
+    c1.xlarge:
+      Arch: HVM64
+    c3.large:
+      Arch: HVM64
+    c3.xlarge:
+      Arch: HVM64
+    c3.2xlarge:
+      Arch: HVM64
+    c3.4xlarge:
+      Arch: HVM64
+    c3.8xlarge:
+      Arch: HVM64
+    c4.large:
+      Arch: HVM64
+    c4.xlarge:
+      Arch: HVM64
+    c4.2xlarge:
+      Arch: HVM64
+    c4.4xlarge:
+      Arch: HVM64
+    c4.8xlarge:
+      Arch: HVM64
+    g2.2xlarge:
+      Arch: HVMG2
+    g2.8xlarge:
+      Arch: HVMG2
+    r3.large:
+      Arch: HVM64
+    r3.xlarge:
+      Arch: HVM64
+    r3.2xlarge:
+      Arch: HVM64
+    r3.4xlarge:
+      Arch: HVM64
+    r3.8xlarge:
+      Arch: HVM64
+    i2.xlarge:
+      Arch: HVM64
+    i2.2xlarge:
+      Arch: HVM64
+    i2.4xlarge:
+      Arch: HVM64
+    i2.8xlarge:
+      Arch: HVM64
+    d2.xlarge:
+      Arch: HVM64
+    d2.2xlarge:
+      Arch: HVM64
+    d2.4xlarge:
+      Arch: HVM64
+    d2.8xlarge:
+      Arch: HVM64
+    hi1.4xlarge:
+      Arch: HVM64
+    hs1.8xlarge:
+      Arch: HVM64
+    cr1.8xlarge:
+      Arch: HVM64
+    cc2.8xlarge:
+      Arch: HVM64
+  AWSInstanceType2NATArch:
+    t1.micro:
+      Arch: NATHVM64
+    t2.nano:
+      Arch: NATHVM64
+    t2.micro:
+      Arch: NATHVM64
+    t2.small:
+      Arch: NATHVM64
+    t2.medium:
+      Arch: NATHVM64
+    t2.large:
+      Arch: NATHVM64
+    m1.small:
+      Arch: NATHVM64
+    m1.medium:
+      Arch: NATHVM64
+    m1.large:
+      Arch: NATHVM64
+    m1.xlarge:
+      Arch: NATHVM64
+    m2.xlarge:
+      Arch: NATHVM64
+    m2.2xlarge:
+      Arch: NATHVM64
+    m2.4xlarge:
+      Arch: NATHVM64
+    m3.medium:
+      Arch: NATHVM64
+    m3.large:
+      Arch: NATHVM64
+    m3.xlarge:
+      Arch: NATHVM64
+    m3.2xlarge:
+      Arch: NATHVM64
+    m4.large:
+      Arch: NATHVM64
+    m4.xlarge:
+      Arch: NATHVM64
+    m4.2xlarge:
+      Arch: NATHVM64
+    m4.4xlarge:
+      Arch: NATHVM64
+    m4.10xlarge:
+      Arch: NATHVM64
+    c1.medium:
+      Arch: NATHVM64
+    c1.xlarge:
+      Arch: NATHVM64
+    c3.large:
+      Arch: NATHVM64
+    c3.xlarge:
+      Arch: NATHVM64
+    c3.2xlarge:
+      Arch: NATHVM64
+    c3.4xlarge:
+      Arch: NATHVM64
+    c3.8xlarge:
+      Arch: NATHVM64
+    c4.large:
+      Arch: NATHVM64
+    c4.xlarge:
+      Arch: NATHVM64
+    c4.2xlarge:
+      Arch: NATHVM64
+    c4.4xlarge:
+      Arch: NATHVM64
+    c4.8xlarge:
+      Arch: NATHVM64
+    g2.2xlarge:
+      Arch: NATHVMG2
+    g2.8xlarge:
+      Arch: NATHVMG2
+    r3.large:
+      Arch: NATHVM64
+    r3.xlarge:
+      Arch: NATHVM64
+    r3.2xlarge:
+      Arch: NATHVM64
+    r3.4xlarge:
+      Arch: NATHVM64
+    r3.8xlarge:
+      Arch: NATHVM64
+    i2.xlarge:
+      Arch: NATHVM64
+    i2.2xlarge:
+      Arch: NATHVM64
+    i2.4xlarge:
+      Arch: NATHVM64
+    i2.8xlarge:
+      Arch: NATHVM64
+    d2.xlarge:
+      Arch: NATHVM64
+    d2.2xlarge:
+      Arch: NATHVM64
+    d2.4xlarge:
+      Arch: NATHVM64
+    d2.8xlarge:
+      Arch: NATHVM64
+    hi1.4xlarge:
+      Arch: NATHVM64
+    hs1.8xlarge:
+      Arch: NATHVM64
+    cr1.8xlarge:
+      Arch: NATHVM64
+    cc2.8xlarge:
+      Arch: NATHVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-0080e4c5bc078760e
+      HVMG2: ami-0aeb704d503081ea6
+    us-west-2:
+      HVM64: ami-01e24be29428c15b2
+      HVMG2: ami-0fe84a5b4563d8f27
+    us-west-1:
+      HVM64: ami-0ec6517f6edbf8044
+      HVMG2: ami-0a7fc72dc0e51aa77
+    eu-west-1:
+      HVM64: ami-08935252a36e25f85
+      HVMG2: ami-0d5299b1c6112c3c7
+    eu-west-2:
+      HVM64: ami-01419b804382064e4
+      HVMG2: NOT_SUPPORTED
+    eu-west-3:
+      HVM64: ami-0dd7e7ed60da8fb83
+      HVMG2: NOT_SUPPORTED
+    eu-central-1:
+      HVM64: ami-0cfbf4f6db41068ac
+      HVMG2: ami-0aa1822e3eb913a11
+    eu-north-1:
+      HVM64: ami-86fe70f8
+      HVMG2: ami-32d55b4c
+    ap-northeast-1:
+      HVM64: ami-00a5245b4816c38e6
+      HVMG2: ami-09d0e0e099ecabba2
+    ap-northeast-2:
+      HVM64: ami-00dc207f8ba6dc919
+      HVMG2: NOT_SUPPORTED
+    ap-northeast-3:
+      HVM64: ami-0b65f69a5c11f3522
+      HVMG2: NOT_SUPPORTED
+    ap-southeast-1:
+      HVM64: ami-05b3bcf7f311194b3
+      HVMG2: ami-0e46ce0d6a87dc979
+    ap-southeast-2:
+      HVM64: ami-02fd0b06f06d93dfc
+      HVMG2: ami-0c0ab057a101d8ff2
+    ap-south-1:
+      HVM64: ami-0ad42f4f66f6c1cc9
+      HVMG2: ami-0244c1d42815af84a
+    us-east-2:
+      HVM64: ami-0cd3dfa4e37921605
+      HVMG2: NOT_SUPPORTED
+    ca-central-1:
+      HVM64: ami-07423fb63ea0a0930
+      HVMG2: NOT_SUPPORTED
+    sa-east-1:
+      HVM64: ami-05145e0b28ad8e0b2
+      HVMG2: NOT_SUPPORTED
+    cn-north-1:
+      HVM64: ami-053617c9d818c1189
+      HVMG2: NOT_SUPPORTED
+    cn-northwest-1:
+      HVM64: ami-0f7937761741dc640
+      HVMG2: NOT_SUPPORTED
+Resources:
+  CloudButlerInstance:
+    Type: 'AWS::EC2::Instance'
+    Metadata:
+      'AWS::CloudFormation::Init':
+        config:
+          packages:
+            yum:
+              docker: []
+          users:
+            ec2-user:
+              groups:
+                - "docker"
+          services:
+            sysvinit: 
+              docker: 
+                enabled: "true"
+                ensureRunning: "true"
+                packages: 
+                  yum: 
+                    - "docker"
+          files:
+            /opt/cloudbutler/docker-compose.yml:
+              content: !Sub |
+                version: '2'
+                services:
+                  postgres:
+                    image: postgres:9.5
+                    environment:
+                      - POSTGRES_USER={{ postgres_user }}
+                      - POSTGRES_PASSWORD={{ postgres_password }}
+                  cog:
+                    extends:
+                      file: docker-compose.common.yml
+                      service: common
+                    image: operable/cog:1.0
+                    volumes:
+                      - /opt/cloudbutler/bundles:/home/operable/cog/bundles
+                    environment:
+                      - COG_MQTT_HOST=0.0.0.0
+                      - DATABASE_URL=ecto://{{ postgres_user }}:{{ postgres_password }}@{{ postgres_url }}:{{ postgres_port }}/{{ postgres_name }}
+                    depends_on:
+                      - postgres
+                    ports:
+                      - 1883
+                      - 80:4000
+                      - 4001:4001
+                      - 4002:4002
+                    entrypoint: /home/operable/cog/scripts/docker-start
+                  relay:
+                    extends:
+                      file: docker-compose.common.yml
+                      service: common
+                    image: operable/relay:1.0
+                    privileged: true
+                    volumes:
+                      - /var/run/docker.sock:/var/run/docker.sock
+                    environment:
+                      - RELAY_COG_REFRESH_INTERVAL=30s
+                      - RELAY_DOCKER_CLEAN_INTERVAL=1m
+                      - RELAY_COG_HOST=cog
+                      - RELAY_DYNAMIC_CONFIG_ROOT=/tmp/bundle_configs
+                    depends_on:
+                      - cog
+                    entrypoint: /usr/local/bin/relay
+              context:
+                postgres_url: !Ref PostgresURL
+                postgres_port: !Ref PostgresPort
+                postgres_name: !Ref PostgresName
+                postgres_user: !Ref PostgresUser
+                postgres_password: !Ref PostgresPassword
+              owner: "root"
+              group: "docker"
+              mode: "000644"
+            /opt/cloudbutler/docker-compose.common.yml:
+              content: !Sub |
+                version: '2'
+                services:
+                  common:
+                    environment:
+                      - COG_API_URL_BASE=http://0.0.0.0
+                      - COG_TRIGGER_URL_BASE=http://0.0.0.0:4001
+                      - COG_SERVICE_URL_BASE=http://0.0.0.0:4002
+              owner: "root"
+              group: "docker"
+              mode: "000644"
+            /opt/cloudbutler/docker-compose.override.yml:
+              content: !Sub |
+                version: '2'
+                services:
+                  cog:
+                    environment:
+                      - COG_SLACK_ENABLED=1
+                      - COG_ALLOW_SELF_REGISTRATION=1
+                      - SLACK_API_TOKEN={{ slack_api_token }}
+                      - COG_BOOTSTRAP_USERNAME=admin
+                      - COG_BOOTSTRAP_PASSWORD={{ cloudbutler_password }}
+                      - COG_BOOTSTRAP_EMAIL_ADDRESS=cloudbutler@localhost
+                      - COG_BOOTSTRAP_FIRST_NAME=CloudButler
+                      - COG_BOOTSTRAP_LAST_NAME=Administrator
+                      - COG_TELEMETRY=false
+                      - RELAY_ID=00000000-0000-0000-0000-000000000000
+                      - RELAY_COG_TOKEN={{ cloudbutler_password }}
+                  relay:
+                    environment:
+                      - RELAY_ID=00000000-0000-0000-0000-000000000000
+                      - RELAY_COG_TOKEN={{ cloudbutler_password }}
+              context:
+                slack_api_token: !Ref SlackAPIToken
+                cloudbutler_password: !Ref CloudButlerPassword
+              owner: "root"
+              group: "docker"
+              mode: "000644"
+          commands:
+            01_install_docker_compose:
+              command: "curl -L \"https://github.com/docker/compose/releases/download/1.25.4/docker-compose-$(uname -s)-$(uname -m)\" -o /bin/docker-compose"
+            02_set_docker_compose_executable:
+              command: "chmod +x /bin/docker-compose"
+              test: "test -e /bin/docker-compose"
+    Properties:
+      ImageId: !FindInMap 
+        - AWSRegionArch2AMI
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AWSInstanceType2Arch
+          - !Ref InstanceType
+          - Arch
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref SSHSecurityGroup
+      KeyName: !Ref KeyName
+      UserData: 
+              'Fn::Base64': !Sub |
+                #!/bin/bash -ex
+                yum update -y aws-cfn-bootstrap
+                /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource CloudButlerInstance --region ${AWS::Region}
+                docker-compose -f /opt/cloudbutler/docker-compose.yml -f /opt/cloudbutler/docker-compose.override.yml up -d
+                /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource CloudButlerInstance --region ${AWS::Region}
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT1H
+  SSHSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref SSHLocation
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref CloudButlerInstance
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt 
+      - CloudButlerInstance
+      - AvailabilityZone
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt 
+      - CloudButlerInstance
+      - PublicDnsName
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt 
+      - CloudButlerInstance
+      - PublicIp
+  PrivateIP:
+    Description: Private IP address of the newly created EC2 instance
+    Value: !GetAtt 
+      - CloudButlerInstance
+      - PrivateIp 
