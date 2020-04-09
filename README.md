@@ -2,7 +2,7 @@
 
 CloudButler brings the power of the command line to the place you collaborate with your team all the time - your chat window. Built on top of the dynamic Cog infrastructre, CloudButler is a simple revision of the infrastructure to get you up and running with minimal install and configuration. (You won't even need an IT department.)
 
-Cog is production ready! :tada:
+CloudButler is production ready! :tada:
 
 ### Details about Cog
 
